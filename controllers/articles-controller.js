@@ -34,7 +34,7 @@ var getArticleById = async (req, res, next) => {
 
 // Get author article(s) with it's id
 var getArticlesByUserId = async (req, res, next) => {
-  var userId = req.userId;
+  var userId = req.params.user;
 
   try {
     var authorWithArticles = await User.findById(userId).populate("articles");

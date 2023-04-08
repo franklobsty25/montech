@@ -8,17 +8,48 @@ var mongoose = require('mongoose');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users-route');
 var articlesRouter = require('./routes/articles-route');
+require('dotenv').config();
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
 // Database connection
-mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.8psfm.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`)
-.then(() => {
-  console.log('Database connected...');
-})
-.catch((error) => {
-  console.error(`Error: ${error}`);
-});
+mongoose
+  .connect(
+    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.8psfm.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`
+  )
+  .then(() => {
+    console.log('Database connected...');
+  })
+  .catch((error) => {
+    console.error(`Error: ${error}`);
+  });
 
 var app = express();
+
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Montech Api',
+      version: '1.0.0',
+      description: 'Montech api to for articles',
+    },
+    basePath: '/',
+    securityDefinitions: {
+      Authorization: {
+        type: 'apiKey',
+        name: 'authorization',
+        in: 'header',
+        description: 'authorization token',
+      }
+    }
+  },
+  apis: ['./routes/*.js'],
+};
+
+const specs = swaggerJsdoc(options);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -32,7 +63,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  );
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUTH, DELETE');
   next();
 });
@@ -42,12 +76,12 @@ app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/articles', articlesRouter);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
